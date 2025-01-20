@@ -26,11 +26,21 @@ public class Usuario {
     @Column
     private String contrasena;
 
+    private String roles;
+
     @OneToMany(mappedBy = "usuario")
     private Set<Post> posts;
 
     @OneToMany(mappedBy = "usuario")
     private Set<Comentario> comentarios;
+
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
 
     public Long getId() {
         return id;

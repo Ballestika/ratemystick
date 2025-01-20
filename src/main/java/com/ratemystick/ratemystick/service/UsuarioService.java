@@ -12,20 +12,41 @@ import com.ratemystick.ratemystick.util.ReferencedWarning;
 import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
-public class UsuarioService {
+public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
     private final PostRepository postRepository;
     private final ComentarioRepository comentarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(final UsuarioRepository usuarioRepository,
-            final PostRepository postRepository, final ComentarioRepository comentarioRepository) {
+                          final PostRepository postRepository,
+                          final ComentarioRepository comentarioRepository,
+                          final PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.postRepository = postRepository;
         this.comentarioRepository = comentarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    // Método para Spring Security
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Usuario usuario = usuarioRepository.findByCorreo(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with correo: " + username));
+
+        return User.builder()
+                .username(usuario.getCorreo())
+                .password(usuario.getContrasena())
+                .roles("USER") // Cambiar según los roles que manejes
+                .build();
     }
 
     public List<UsuarioDTO> findAll() {
@@ -44,6 +65,7 @@ public class UsuarioService {
     public Long create(final UsuarioDTO usuarioDTO) {
         final Usuario usuario = new Usuario();
         mapToEntity(usuarioDTO, usuario);
+        usuario.setContrasena(passwordEncoder.encode(usuarioDTO.getContrasena())); // Codifica la contraseña
         return usuarioRepository.save(usuario).getId();
     }
 
@@ -51,6 +73,7 @@ public class UsuarioService {
         final Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
         mapToEntity(usuarioDTO, usuario);
+        usuario.setContrasena(passwordEncoder.encode(usuarioDTO.getContrasena())); // Codifica la nueva contraseña
         usuarioRepository.save(usuario);
     }
 
@@ -91,5 +114,4 @@ public class UsuarioService {
         }
         return null;
     }
-
 }
