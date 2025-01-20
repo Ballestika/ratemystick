@@ -61,53 +61,44 @@ public class PostController {
         System.out.println("Entrando al método de agregar post");
 
         try {
+            // Verifica si el archivo es válido
+            if (file == null || file.isEmpty()) {
+                throw new IllegalArgumentException("El archivo de imagen no se ha proporcionado o está vacío");
+            }
+
             // Obtener el usuario autenticado
             System.out.println("Obteniendo el usuario autenticado");
             String email = principal.getName();
-            System.out.println("Email del usuario autenticado: " + email);
-
             Usuario usuario = usuarioRepository.findByCorreo(email)
-                    .orElseThrow(() -> {
-                        System.out.println("Usuario no encontrado con el email: " + email);
-                        return new IllegalStateException("Usuario no encontrado");
-                    });
+                    .orElseThrow(() -> new IllegalStateException("Usuario no encontrado con el email: " + email));
+            System.out.println("Usuario autenticado: " + usuario.getNombre());
 
-            System.out.println("Usuario encontrado: " + usuario.getNombre());
+            // Ruta para guardar la imagen en "resources/static/uploads"
+            String uploadsDir = "src/main/resources/static/uploads";
+            Path uploadPath = Paths.get(uploadsDir);
 
-            // Guardar la imagen en el directorio "uploads"
-            System.out.println("Procesando la imagen subida");
-            String fileName = file.getOriginalFilename();
-            System.out.println("Nombre del archivo: " + fileName);
-
-            if (fileName == null || fileName.isEmpty()) {
-                throw new IllegalArgumentException("El archivo de imagen está vacío");
+            // Crea el directorio si no existe
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                System.out.println("Directorio creado en: " + uploadPath.toAbsolutePath());
             }
 
-            Path path = Paths.get("uploads/" + fileName);
-            System.out.println("Guardando el archivo en la ruta: " + path.toAbsolutePath());
-
-            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Archivo guardado correctamente");
+            // Guardar la imagen
+            String fileName = file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Imagen guardada en: " + filePath.toAbsolutePath());
 
             // Crear el PostDTO
-            System.out.println("Creando el DTO del post");
             PostDTO postDTO = new PostDTO();
-            postDTO.setImagen("/uploads/" + fileName);
+            postDTO.setImagen("/uploads/" + fileName); // Ruta accesible desde el navegador
             postDTO.setDescripcion(descripcion);
             postDTO.setUsuario(usuario.getId());
-
-            System.out.println("Datos del post: " +
-                    " Imagen: " + postDTO.getImagen() +
-                    ", Descripción: " + postDTO.getDescripcion() +
-                    ", Usuario ID: " + postDTO.getUsuario());
-
-            // Guardar el post
             postService.create(postDTO);
             System.out.println("Post creado correctamente");
 
             redirectAttributes.addFlashAttribute("success", "Post creado correctamente");
             return "redirect:/posts";
-
         } catch (Exception e) {
             System.err.println("Error al subir el post: " + e.getMessage());
             e.printStackTrace();
@@ -115,6 +106,7 @@ public class PostController {
             return "redirect:/posts/add";
         }
     }
+
 
 
 
