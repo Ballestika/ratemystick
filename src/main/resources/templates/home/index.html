@@ -16,18 +16,18 @@
         <div th:each="post : ${posts}" class="bg-white shadow-md rounded-lg p-6">
             <!-- Usuario/Autor del post -->
             <div class="flex items-center mb-4">
-                <img th:src="${'/images/avatars/' + post.usuario + '.jpg'}" alt="Avatar del usuario"
+                <img th:src="@{'/uploads/' + ${post.usuario} + '.jpg'}" alt="Avatar del usuario"
                      class="w-12 h-12 rounded-full mr-4">
                 <div>
                     <p class="text-lg font-semibold" th:text="${post.nombreUsuario}">Nombre del usuario</p>
-                    <p class="text-sm text-gray-500" th:text="${post.id}">ID del post</p>
+                    <p class="text-sm text-gray-500" th:text="'Post ID: ' + ${post.id}">ID del post</p>
                 </div>
             </div>
 
             <!-- Contenido del post -->
             <div>
                 <p class="text-gray-800 mb-4" th:text="${post.descripcion}">Descripción del post</p>
-                <img th:if="${post.imagen != null}" th:src="${post.imagen}" alt="Imagen del post"
+                <img th:if="${post.imagen != null}" th:src="@{${post.imagen}}" alt="Imagen del post"
                      class="w-full rounded-lg mb-4">
             </div>
 
