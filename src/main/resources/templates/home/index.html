@@ -1,24 +1,61 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-        layout:decorate="~{layout}">
-    <head>
-        <title>[[#{home.index.headline}]]</title>
-        <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    </head>
-    <body>
-        <div layout:fragment="content">
-            <h1 class="grow text-3xl md:text-4xl font-medium mb-8">[[#{home.index.headline}]]</h1>
-            <p class="mb-12">[(#{home.index.text})]</p>
-            <div class="md:w-2/5 mb-12">
-                <h4 class="text-2xl font-medium mb-4">[[#{home.index.exploreEntities}]]</h4>
-                <div class="flex flex-col border border-gray-300 rounded">
-                    <a th:href="@{/usuarios}" class="w-full border-gray-300 hover:bg-gray-100 border-b rounded-t px-4 py-2">[[#{usuario.list.headline}]]</a>
-                    <a th:href="@{/posts}" class="w-full border-gray-300 hover:bg-gray-100 border-b px-4 py-2">[[#{post.list.headline}]]</a>
-                    <a th:href="@{/ratings}" class="w-full border-gray-300 hover:bg-gray-100 border-b px-4 py-2">[[#{rating.list.headline}]]</a>
-                    <a th:href="@{/comentarios}" class="w-full border-gray-300 hover:bg-gray-100 border-b px-4 py-2">[[#{comentario.list.headline}]]</a>
-                    <a th:href="@{/anuncios}" class="w-full border-gray-300 hover:bg-gray-100 rounded-b px-4 py-2">[[#{anuncio.list.headline}]]</a>
+      layout:decorate="~{layout}">
+<head>
+    <title>[[#{home.index.headline}]]</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body>
+<div layout:fragment="content" class="bg-gray-100 py-10 px-6">
+    <h1 class="text-4xl font-bold text-center mb-10">[[#{home.index.headline}]]</h1>
+
+    <!-- Contenedor de publicaciones -->
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Iterar sobre los posts -->
+        <div th:each="post : ${posts}" class="bg-white shadow-md rounded-lg p-6">
+            <!-- Usuario/Autor del post -->
+            <div class="flex items-center mb-4">
+                <img th:src="${'/images/avatars/' + post.usuario + '.jpg'}" alt="Avatar del usuario"
+                     class="w-12 h-12 rounded-full mr-4">
+                <div>
+                    <p class="text-lg font-semibold" th:text="${post.nombreUsuario}">Nombre del usuario</p>
+                    <p class="text-sm text-gray-500" th:text="${post.id}">ID del post</p>
+                </div>
+            </div>
+
+            <!-- Contenido del post -->
+            <div>
+                <p class="text-gray-800 mb-4" th:text="${post.descripcion}">Descripción del post</p>
+                <img th:if="${post.imagen != null}" th:src="${post.imagen}" alt="Imagen del post"
+                     class="w-full rounded-lg mb-4">
+            </div>
+
+            <!-- Interacciones -->
+            <div class="flex items-center justify-between text-gray-500">
+                <!-- Likes -->
+                <button class="flex items-center text-blue-500 hover:text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M14 9l-5 5m0 0l5 5m-5-5H3"/>
+                    </svg>
+                    <span th:text="${post.likes}">0</span> Likes
+                </button>
+
+                <!-- Comentarios -->
+                <p class="text-sm" th:text="${post.comentarios.size()} + ' Comentarios'">0 Comentarios</p>
+            </div>
+
+            <!-- Comentarios -->
+            <div class="mt-6">
+                <h4 class="text-lg font-medium mb-4">Comentarios:</h4>
+                <div th:each="comment : ${post.comentarios}" class="border-t border-gray-300 pt-4">
+                    <p class="text-sm text-gray-800" th:text="${comment}">Texto del comentario</p>
                 </div>
             </div>
         </div>
-    </body>
+    </div>
+</div>
+</body>
 </html>

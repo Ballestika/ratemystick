@@ -1,5 +1,5 @@
 import 'htmx.org';
-import 'css/app.css';
+import 'static/css/bundle.css';
 
 
 /**

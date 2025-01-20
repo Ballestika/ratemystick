@@ -3,6 +3,7 @@ package com.ratemystick.ratemystick.model;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
 
 public class PostDTO {
 
@@ -17,6 +18,12 @@ public class PostDTO {
 
     @NotNull
     private Long usuario;
+
+    private String nombreUsuario; // Nombre del autor
+
+    private int likes; // Número de likes
+
+    private List<String> comentarios; // Lista de comentarios
 
     public Long getId() {
         return id;
@@ -50,4 +57,27 @@ public class PostDTO {
         this.usuario = usuario;
     }
 
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(final String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
+
+    public int getLikes() {
+        return likes;
+    }
+
+    public void setLikes(final int likes) {
+        this.likes = likes;
+    }
+
+    public List<String> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(final List<String> comentarios) {
+        this.comentarios = comentarios;
+    }
 }

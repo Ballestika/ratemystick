@@ -11,10 +11,12 @@ import com.ratemystick.ratemystick.repos.RatingRepository;
 import com.ratemystick.ratemystick.repos.UsuarioRepository;
 import com.ratemystick.ratemystick.util.NotFoundException;
 import com.ratemystick.ratemystick.util.ReferencedWarning;
-import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -25,20 +27,23 @@ public class PostService {
     private final ComentarioRepository comentarioRepository;
 
     public PostService(final PostRepository postRepository,
-            final UsuarioRepository usuarioRepository, final RatingRepository ratingRepository,
-            final ComentarioRepository comentarioRepository) {
+                       final UsuarioRepository usuarioRepository,
+                       final RatingRepository ratingRepository,
+                       final ComentarioRepository comentarioRepository) {
         this.postRepository = postRepository;
         this.usuarioRepository = usuarioRepository;
         this.ratingRepository = ratingRepository;
         this.comentarioRepository = comentarioRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<PostDTO> findAll() {
-        final List<Post> posts = postRepository.findAll(Sort.by("id"));
+        final List<Post> posts = postRepository.findAll(Sort.by("id").descending());
         return posts.stream()
                 .map(post -> mapToDTO(post, new PostDTO()))
                 .toList();
     }
+
 
     public PostDTO get(final Long id) {
         return postRepository.findById(id)
@@ -67,16 +72,39 @@ public class PostService {
         postDTO.setId(post.getId());
         postDTO.setImagen(post.getImagen());
         postDTO.setDescripcion(post.getDescripcion());
-        postDTO.setUsuario(post.getUsuario() == null ? null : post.getUsuario().getId());
+
+        // Mapear el nombre del usuario
+        if (post.getUsuario() != null) {
+            postDTO.setNombreUsuario(post.getUsuario().getNombre());
+        }
+
+        // Contar el número de likes
+        if (post.getRatings() != null) {
+            postDTO.setLikes(post.getRatings().size());
+        } else {
+            postDTO.setLikes(0);
+        }
+
+        // Extraer comentarios
+        if (post.getComentarios() != null) {
+            List<String> comentarios = post.getComentarios().stream()
+                    .map(Comentario::getContenido) // Obtener el contenido de cada comentario
+                    .toList();
+            postDTO.setComentarios(comentarios);
+        }
+
         return postDTO;
     }
 
     private Post mapToEntity(final PostDTO postDTO, final Post post) {
         post.setImagen(postDTO.getImagen());
         post.setDescripcion(postDTO.getDescripcion());
-        final Usuario usuario = postDTO.getUsuario() == null ? null : usuarioRepository.findById(postDTO.getUsuario())
-                .orElseThrow(() -> new NotFoundException("usuario not found"));
+
+        final Usuario usuario = postDTO.getUsuario() == null ? null :
+                usuarioRepository.findById(postDTO.getUsuario())
+                        .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
         post.setUsuario(usuario);
+
         return post;
     }
 
@@ -84,19 +112,21 @@ public class PostService {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Post post = postRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
+
         final Rating postRating = ratingRepository.findFirstByPost(post);
         if (postRating != null) {
             referencedWarning.setKey("post.rating.post.referenced");
             referencedWarning.addParam(postRating.getId());
             return referencedWarning;
         }
+
         final Comentario postComentario = comentarioRepository.findFirstByPost(post);
         if (postComentario != null) {
             referencedWarning.setKey("post.comentario.post.referenced");
             referencedWarning.addParam(postComentario.getId());
             return referencedWarning;
         }
+
         return null;
     }
-
 }

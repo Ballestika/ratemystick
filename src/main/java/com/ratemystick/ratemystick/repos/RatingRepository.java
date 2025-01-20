@@ -9,4 +9,6 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     Rating findFirstByPost(Post post);
 
+    long countByPost(Post post);
+
 }

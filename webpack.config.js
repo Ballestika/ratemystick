@@ -7,7 +7,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 
 module.exports = (env, argv) => ({
-  entry: 'ts/app.ts',
+  entry: 'ts/bundle.ts',
   output: {
     path: path.resolve(__dirname, './target/classes/static'),
     filename: 'js/bundle.js'
