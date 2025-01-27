@@ -3,7 +3,6 @@ package com.ratemystick.ratemystick.model;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-
 public class ComentarioDTO {
 
     private Long id;
@@ -48,5 +47,4 @@ public class ComentarioDTO {
     public void setPost(final Long post) {
         this.post = post;
     }
-
 }

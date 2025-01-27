@@ -5,6 +5,7 @@ import com.ratemystick.ratemystick.domain.Post;
 import com.ratemystick.ratemystick.domain.Rating;
 import com.ratemystick.ratemystick.domain.Usuario;
 import com.ratemystick.ratemystick.model.PostDTO;
+import com.ratemystick.ratemystick.model.ComentarioDTO;
 import com.ratemystick.ratemystick.repos.ComentarioRepository;
 import com.ratemystick.ratemystick.repos.PostRepository;
 import com.ratemystick.ratemystick.repos.RatingRepository;
@@ -121,16 +122,25 @@ public class PostService {
             postDTO.setRating(0);
         }
 
-        // Extraer comentarios
+        // Extraer comentarios y mapear a ComentarioDTO
         if (post.getComentarios() != null) {
-            List<String> comentarios = post.getComentarios().stream()
-                    .map(Comentario::getContenido) // Obtener el contenido de cada comentario
-                    .toList();
-            postDTO.setComentarios(comentarios);
+            List<ComentarioDTO> comentariosDTO = post.getComentarios().stream()
+                    .map(comentario -> {
+                        ComentarioDTO comentarioDTO = new ComentarioDTO();
+                        comentarioDTO.setId(comentario.getId());
+                        comentarioDTO.setContenido(comentario.getContenido());
+                        comentarioDTO.setUsuario(comentario.getUsuario().getId()); // Suponiendo que 'Usuario' tiene un método getId()
+                        comentarioDTO.setPost(comentario.getPost().getId()); // Suponiendo que 'Post' tiene un método getId()
+                        return comentarioDTO;
+                    })
+                    .collect(Collectors.toList());
+            postDTO.setComentarios(comentariosDTO);
         }
 
         return postDTO;
     }
+
+
 
     private Post mapToEntity(final PostDTO postDTO, final Post post) {
         post.setImagen(postDTO.getImagen());

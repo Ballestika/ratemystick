@@ -1,9 +1,11 @@
 package com.ratemystick.ratemystick.controller;
 
 import com.ratemystick.ratemystick.domain.Usuario;
+import com.ratemystick.ratemystick.model.ComentarioDTO;
 import com.ratemystick.ratemystick.model.PostDTO;
 import com.ratemystick.ratemystick.model.RatingDTO;
 import com.ratemystick.ratemystick.repos.UsuarioRepository;
+import com.ratemystick.ratemystick.service.ComentarioService;
 import com.ratemystick.ratemystick.service.PostService;
 import com.ratemystick.ratemystick.service.RatingService;
 import com.ratemystick.ratemystick.util.WebUtils;
@@ -20,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,15 +35,17 @@ public class PostController {
     private final PostService postService;
     private final UsuarioRepository usuarioRepository;
     private final RatingService ratingService;
+    private final ComentarioService comentarioService;
 
     private static final Logger logger = LoggerFactory.getLogger(PostController.class);
 
     private static final String UPLOAD_DIR = "src/main/resources/static/images/posts/";
 
-    public PostController(final PostService postService, final UsuarioRepository usuarioRepository, RatingService ratingService) {
+    public PostController(final PostService postService, final UsuarioRepository usuarioRepository, RatingService ratingService, ComentarioService comentarioService) {
         this.postService = postService;
         this.usuarioRepository = usuarioRepository;
         this.ratingService = ratingService;
+        this.comentarioService = comentarioService;
     }
 
     @GetMapping
@@ -121,18 +126,25 @@ public class PostController {
             PostDTO post = postService.get(id);
 
             // Calcular el rating promedio
-            double puntos = postService.getTotalPuntos(id); // Método para sumar los puntos de las valoraciones
-            long cantidadVotos = postService.getCantidadVotos(id); // Método para contar las valoraciones
+            double puntos = postService.getTotalPuntos(id);
+            long cantidadVotos = postService.getCantidadVotos(id);
             double promedio = cantidadVotos > 0 ? (double) puntos / cantidadVotos : 0;
-            post.setRating(Math.round(promedio * 10) / 10.0); // Redondear a 1 decimal
+            post.setRating(Math.round(promedio * 10) / 10.0);
+
+            // Obtener comentarios para el post
+            List<ComentarioDTO> comentarios = comentarioService.findByPostId(id);
+            post.setComentarios(comentarios);  // Establecer los comentarios en el post
 
             model.addAttribute("post", post);
-            return "post/post";
+            return "post/post"; // Devuelve la vista con los comentarios
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "El post no fue encontrado.");
             return "redirect:/posts";
         }
     }
+
+
+
 
 
     @GetMapping("/valorar")
@@ -151,31 +163,67 @@ public class PostController {
 
 
     @PostMapping("/valorar")
-    public String registrarValoracion(@ModelAttribute("rating") @Valid final RatingDTO ratingDTO,
-                                      final BindingResult bindingResult,
+    public String registrarValoracion(@RequestParam("postId") Long postId,
+                                      @RequestParam("rating") int rating,
                                       final RedirectAttributes redirectAttributes) {
-        System.out.println("Intentando registrar valoración: " + ratingDTO);
-
-        if (bindingResult.hasErrors()) {
-            System.out.println("Error en la validación de la valoración: " + bindingResult.getAllErrors());
-            redirectAttributes.addFlashAttribute("error", "La valoración no es válida. Intenta de nuevo.");
-            return "redirect:/posts/valorar"; // Volver a la pantalla de valoración
-        }
-
         try {
+            // Asegurarse de que se haya seleccionado una valoración
+            if (rating < 1 || rating > 5) {
+                redirectAttributes.addFlashAttribute("error", "La valoración debe estar entre 1 y 5 estrellas.");
+                return "redirect:/posts/valorar"; // Volver a la pantalla de valoración
+            }
+
+            // Crear RatingDTO
+            RatingDTO ratingDTO = new RatingDTO();
+            ratingDTO.setPuntuacion(String.valueOf(rating));
+            ratingDTO.setPost(postId);
+
+            // Guardar la valoración
             ratingService.create(ratingDTO);
-            System.out.println("Valoración registrada exitosamente: " + ratingDTO);
+
             redirectAttributes.addFlashAttribute("success", "¡Valoración registrada exitosamente!");
         } catch (Exception e) {
-            System.out.println("Error al registrar la valoración.");
-            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Ocurrió un error al registrar tu valoración.");
         }
-
         return "redirect:/posts/valorar"; // Redirigir para valorar otro post
     }
 
+    @PostMapping("/comentario")
+    public String registrarComentario(@RequestParam("contenido") String contenido,
+                                      @RequestParam("postId") Long postId,
+                                      Principal principal,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            // Obtener el usuario autenticado (si hay uno)
+            Usuario usuario;
+            if (principal != null) {
+                String email = principal.getName();
+                usuario = usuarioRepository.findByCorreo(email)
+                        .orElseThrow(() -> new IllegalStateException("Usuario no encontrado con el email: " + email));
+            } else {
+                // Si no hay usuario autenticado, asignamos el usuario con id = 1
+                usuario = usuarioRepository.findById(1L)
+                        .orElseThrow(() -> new IllegalStateException("Usuario con id 1 no encontrado"));
+            }
 
+            // Crear el ComentarioDTO y asociarlo al post y al usuario
+            ComentarioDTO comentarioDTO = new ComentarioDTO();
+            comentarioDTO.setContenido(contenido);
+            comentarioDTO.setPost(postId);
+            comentarioDTO.setUsuario(usuario.getId()); // Asignar el usuario correctamente
+
+            // Registrar el comentario
+            comentarioService.create(comentarioDTO);
+
+            // Agregar mensaje de éxito
+            redirectAttributes.addFlashAttribute("success", "Comentario agregado correctamente.");
+            return "redirect:/posts/" + postId; // Redirigir al post donde se agregó el comentario
+        } catch (Exception e) {
+            // Manejo de error si ocurre
+            redirectAttributes.addFlashAttribute("error", "Error al agregar el comentario.");
+            return "redirect:/posts/" + postId;
+        }
+    }
 
     /*
     @PostMapping("/edit/{id}")

@@ -23,7 +23,7 @@ public class PostDTO {
 
     private Double rating; // Campo para la valoración promedio
 
-    private List<String> comentarios; // Lista de comentarios
+    private List<ComentarioDTO> comentarios; // Asegúrate de que esta sea una lista de ComentarioDTO
 
     public Long getId() {
         return id;
@@ -73,11 +73,11 @@ public class PostDTO {
         this.rating = likes;
     }
 
-    public List<String> getComentarios() {
+    public List<ComentarioDTO> getComentarios() {
         return comentarios;
     }
 
-    public void setComentarios(final List<String> comentarios) {
+    public void setComentarios(final List<ComentarioDTO> comentarios) {
         this.comentarios = comentarios;
     }
 }

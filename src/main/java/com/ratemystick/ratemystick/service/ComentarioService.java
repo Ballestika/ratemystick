@@ -9,6 +9,8 @@ import com.ratemystick.ratemystick.repos.PostRepository;
 import com.ratemystick.ratemystick.repos.UsuarioRepository;
 import com.ratemystick.ratemystick.util.NotFoundException;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +48,13 @@ public class ComentarioService {
         return comentarioRepository.save(comentario).getId();
     }
 
+    public List<ComentarioDTO> findByPostId(Long postId) {
+        List<Comentario> comentarios = comentarioRepository.findByPostId(postId);
+        return comentarios.stream()
+                .map(comentario -> mapToDTO(comentario, new ComentarioDTO()))  // Usar mapToDTO para cada comentario
+                .collect(Collectors.toList());
+    }
+
     public void update(final Long id, final ComentarioDTO comentarioDTO) {
         final Comentario comentario = comentarioRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
@@ -57,13 +66,14 @@ public class ComentarioService {
         comentarioRepository.deleteById(id);
     }
 
-    private ComentarioDTO mapToDTO(final Comentario comentario, final ComentarioDTO comentarioDTO) {
+    private ComentarioDTO mapToDTO(Comentario comentario, ComentarioDTO comentarioDTO) {
         comentarioDTO.setId(comentario.getId());
         comentarioDTO.setContenido(comentario.getContenido());
         comentarioDTO.setUsuario(comentario.getUsuario() == null ? null : comentario.getUsuario().getId());
         comentarioDTO.setPost(comentario.getPost() == null ? null : comentario.getPost().getId());
         return comentarioDTO;
     }
+
 
     private Comentario mapToEntity(final ComentarioDTO comentarioDTO, final Comentario comentario) {
         comentario.setContenido(comentarioDTO.getContenido());
@@ -75,5 +85,7 @@ public class ComentarioService {
         comentario.setPost(post);
         return comentario;
     }
+
+
 
 }
