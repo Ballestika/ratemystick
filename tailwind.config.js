@@ -6,7 +6,14 @@ module.exports = {
     'bg-gray-100'
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        grayCustom: '#3C3C3C', // Color gris
+        brownCustom: '#7A3F18', // Color marrón
+        whiteCustom: '#F1F1F1', // Color blanco
+        yellowCustom: '#FFDA1F', // Color amarillo
+      },
+    },
     container: {
       center: true,
     }

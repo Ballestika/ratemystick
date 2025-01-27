@@ -73,12 +73,20 @@ public class PostController {
                 throw new IllegalArgumentException("El archivo de imagen no se ha proporcionado o está vacío");
             }
 
-            // Obtener el usuario autenticado
+            // Obtener el usuario autenticado o asignar el usuario con ID 1 si no hay usuario autenticado
             System.out.println("Obteniendo el usuario autenticado");
-            String email = principal.getName();
-            Usuario usuario = usuarioRepository.findByCorreo(email)
-                    .orElseThrow(() -> new IllegalStateException("Usuario no encontrado con el email: " + email));
-            System.out.println("Usuario autenticado: " + usuario.getNombre());
+            Usuario usuario;
+            if (principal != null) {
+                String email = principal.getName();
+                usuario = usuarioRepository.findByCorreo(email)
+                        .orElseThrow(() -> new IllegalStateException("Usuario no encontrado con el email: " + email));
+                System.out.println("Usuario autenticado: " + usuario.getNombre());
+            } else {
+                // Si no hay usuario autenticado, se asigna el usuario con id 1
+                usuario = usuarioRepository.findById(1L)
+                        .orElseThrow(() -> new IllegalStateException("Usuario con id 1 no encontrado"));
+                System.out.println("Usuario asignado por defecto: " + usuario.getNombre());
+            }
 
             // Ruta para guardar la imagen en "resources/static/uploads"
             String uploadsDir = "src/main/resources/static/uploads";
