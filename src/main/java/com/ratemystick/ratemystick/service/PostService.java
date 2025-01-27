@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,6 +52,41 @@ public class PostService {
                 .orElseThrow(NotFoundException::new);
     }
 
+    @Transactional
+    public PostDTO getRandomPost() {
+        List<Post> posts = postRepository.findAll();
+        if (posts.isEmpty()) {
+            throw new IllegalStateException("No hay posts disponibles.");
+        }
+        // Elegir un post aleatorio
+        int randomIndex = ThreadLocalRandom.current().nextInt(posts.size());
+        Post postAleatorio = posts.get(randomIndex);
+
+        // Crear un PostDTO vacío
+        PostDTO postDTO = new PostDTO();
+
+        // Llamar a mapToDTO con ambos argumentos
+        return mapToDTO(postAleatorio, postDTO);
+    }
+
+    public double getTotalPuntos(Long postId) {
+        return ratingRepository.findByPostId(postId)
+                .stream()
+                .mapToDouble(rating -> {
+                    try {
+                        return Double.parseDouble(rating.getPuntuacion().toString());
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error al convertir la puntuación a double: " + rating.getPuntuacion());
+                        return 0; // Puedes manejarlo como prefieras
+                    }
+                })
+                .sum();
+    }
+
+    public long getCantidadVotos(Long postId) {
+        return ratingRepository.findByPostId(postId).size();
+    }
+
     public Long create(final PostDTO postDTO) {
         final Post post = new Post();
         mapToEntity(postDTO, post);
@@ -80,9 +116,9 @@ public class PostService {
 
         // Contar el número de likes
         if (post.getRatings() != null) {
-            postDTO.setLikes(post.getRatings().size());
+            postDTO.setRating(post.getRatings().size());
         } else {
-            postDTO.setLikes(0);
+            postDTO.setRating(0);
         }
 
         // Extraer comentarios

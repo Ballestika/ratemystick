@@ -2,8 +2,10 @@ package com.ratemystick.ratemystick.controller;
 
 import com.ratemystick.ratemystick.domain.Usuario;
 import com.ratemystick.ratemystick.model.PostDTO;
+import com.ratemystick.ratemystick.model.RatingDTO;
 import com.ratemystick.ratemystick.repos.UsuarioRepository;
 import com.ratemystick.ratemystick.service.PostService;
+import com.ratemystick.ratemystick.service.RatingService;
 import com.ratemystick.ratemystick.util.WebUtils;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -29,13 +31,16 @@ public class PostController {
 
     private final PostService postService;
     private final UsuarioRepository usuarioRepository;
+    private final RatingService ratingService;
+
     private static final Logger logger = LoggerFactory.getLogger(PostController.class);
 
     private static final String UPLOAD_DIR = "src/main/resources/static/images/posts/";
 
-    public PostController(final PostService postService, final UsuarioRepository usuarioRepository) {
+    public PostController(final PostService postService, final UsuarioRepository usuarioRepository, RatingService ratingService) {
         this.postService = postService;
         this.usuarioRepository = usuarioRepository;
+        this.ratingService = ratingService;
     }
 
     @GetMapping
@@ -109,6 +114,67 @@ public class PostController {
         model.addAttribute("post", postService.get(id));
         return "post/edit";
     }
+
+    @GetMapping("/{id}")
+    public String viewPost(@PathVariable(name = "id") Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            PostDTO post = postService.get(id);
+
+            // Calcular el rating promedio
+            double puntos = postService.getTotalPuntos(id); // Método para sumar los puntos de las valoraciones
+            long cantidadVotos = postService.getCantidadVotos(id); // Método para contar las valoraciones
+            double promedio = cantidadVotos > 0 ? (double) puntos / cantidadVotos : 0;
+            post.setRating(Math.round(promedio * 10) / 10.0); // Redondear a 1 decimal
+
+            model.addAttribute("post", post);
+            return "post/post";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "El post no fue encontrado.");
+            return "redirect:/posts";
+        }
+    }
+
+
+    @GetMapping("/valorar")
+    public String valorarPost(Model model, RedirectAttributes redirectAttributes) {
+        try {
+            // Obtener un post aleatorio
+            PostDTO postAleatorio = postService.getRandomPost();
+            model.addAttribute("post", postAleatorio); // Pasar el post al modelo
+            model.addAttribute("rating", new RatingDTO()); // Añadir un objeto RatingDTO vacío
+            return "post/valorar"; // Vista específica para valorar
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No hay posts disponibles para valorar.");
+            return "redirect:/posts"; // Redirigir a la lista si ocurre un error
+        }
+    }
+
+
+    @PostMapping("/valorar")
+    public String registrarValoracion(@ModelAttribute("rating") @Valid final RatingDTO ratingDTO,
+                                      final BindingResult bindingResult,
+                                      final RedirectAttributes redirectAttributes) {
+        System.out.println("Intentando registrar valoración: " + ratingDTO);
+
+        if (bindingResult.hasErrors()) {
+            System.out.println("Error en la validación de la valoración: " + bindingResult.getAllErrors());
+            redirectAttributes.addFlashAttribute("error", "La valoración no es válida. Intenta de nuevo.");
+            return "redirect:/posts/valorar"; // Volver a la pantalla de valoración
+        }
+
+        try {
+            ratingService.create(ratingDTO);
+            System.out.println("Valoración registrada exitosamente: " + ratingDTO);
+            redirectAttributes.addFlashAttribute("success", "¡Valoración registrada exitosamente!");
+        } catch (Exception e) {
+            System.out.println("Error al registrar la valoración.");
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Ocurrió un error al registrar tu valoración.");
+        }
+
+        return "redirect:/posts/valorar"; // Redirigir para valorar otro post
+    }
+
 
 
     /*

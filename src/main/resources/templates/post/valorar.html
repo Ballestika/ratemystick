@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valorar Post</title>
+  <style>
+    .stars {
+      display: flex;
+      gap: 5px;
+      cursor: pointer;
+      font-size: 2rem;
+      color: #ccc;
+    }
+
+    .stars .star.filled {
+      color: #FFD700; /* Color de las estrellas llenas */
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+<h1>Valorar Post</h1>
+
+<!-- Mostrar información del post -->
+<div>
+  <h2 th:text="${post.descripcion}">Descripción del Post</h2>
+  <img th:src="${post.imagen}" alt="Imagen del post" style="max-width: 100%; height: auto;"/>
+</div>
+
+<form th:action="@{/posts/valorar}" method="post" id="ratingForm">
+  <!-- Campo oculto para el ID del post -->
+  <input type="hidden" th:value="${post.id}" name="post" />
+
+  <!-- Campo oculto para la puntuación -->
+  <input type="hidden" name="puntuacion" id="ratingValue" value="0" />
+
+  <!-- Estrellas -->
+  <div class="stars">
+    <span class="star" data-value="1">☆</span>
+    <span class="star" data-value="2">☆</span>
+    <span class="star" data-value="3">☆</span>
+    <span class="star" data-value="4">☆</span>
+    <span class="star" data-value="5">☆</span>
+  </div>
+
+  <!-- Botón de enviar -->
+  <button type="submit">Enviar</button>
+</form>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const stars = document.querySelectorAll(".star");
+    const ratingValue = document.getElementById("ratingValue");
+
+    document.getElementById("ratingForm").addEventListener("submit", (event) => {
+      if (ratingValue.value === "0") {
+        event.preventDefault();
+        alert("Por favor, selecciona una puntuación antes de enviar.");
+      }
+    });
+
+
+    stars.forEach(star => {
+      star.addEventListener("mouseover", () => {
+        resetStars();
+        fillStarsUpTo(star);
+      });
+
+      star.addEventListener("click", () => {
+        const rating = star.getAttribute("data-value");
+        ratingValue.value = rating;
+        resetStars();
+        fillStarsUpTo(star);
+        console.log(`Seleccionaste ${rating} estrellas`);
+      });
+
+      star.addEventListener("mouseout", () => {
+        resetStars();
+        fillStarsUpTo(stars[ratingValue.value - 1]);
+      });
+    });
+
+    function resetStars() {
+      stars.forEach(star => star.classList.remove("filled"));
+    }
+
+    function fillStarsUpTo(star) {
+      if (star) {
+        for (let i = 0; i <= star.getAttribute("data-value") - 1; i++) {
+          stars[i].classList.add("filled");
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>

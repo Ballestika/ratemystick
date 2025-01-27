@@ -21,7 +21,7 @@ public class PostDTO {
 
     private String nombreUsuario; // Nombre del autor
 
-    private int likes; // Número de likes
+    private Double rating; // Campo para la valoración promedio
 
     private List<String> comentarios; // Lista de comentarios
 
@@ -65,12 +65,12 @@ public class PostDTO {
         this.nombreUsuario = nombreUsuario;
     }
 
-    public int getLikes() {
-        return likes;
+    public Double getRating() {
+        return rating;
     }
 
-    public void setLikes(final int likes) {
-        this.likes = likes;
+    public void setRating(final double likes) {
+        this.rating = likes;
     }
 
     public List<String> getComentarios() {

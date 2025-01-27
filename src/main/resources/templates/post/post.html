@@ -1,48 +1,55 @@
-<!DOCTYPE HTML>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout}">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>[[#{post.list.headline}]]</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalles del Post</title>
+  <style>
+    .stars {
+      display: flex;
+      gap: 5px;
+      font-size: 2rem;
+    }
+
+    .stars .star.filled {
+      color: #FFD700; /* Color dorado para las estrellas llenas */
+    }
+
+    .stars .star.empty {
+      color: #ccc; /* Color gris para estrellas vacías */
+    }
+  </style>
 </head>
 <body>
-<div layout:fragment="content">
-  <div class="flex flex-wrap mb-6">
-    <h1 class="grow text-3xl md:text-4xl font-medium mb-2">[[#{post.list.headline}]]</h1>
-    <div>
-      <a th:href="@{/posts/add}" class="inline-block text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300  focus:ring-4 rounded px-5 py-2">[[#{post.list.createNew}]]</a>
-    </div>
-  </div>
-  <div th:if="${posts.empty}">[[#{post.list.empty}]]</div>
-  <div th:if="${!posts.empty}" class="overflow-x-auto">
-    <table class="w-full">
-      <thead>
-      <tr>
-        <th scope="col" class="text-left p-2">[[#{post.id.label}]]</th>
-        <th scope="col" class="text-left p-2">[[#{post.imagen.label}]]</th>
-        <th scope="col" class="text-left p-2">[[#{post.descripcion.label}]]</th>
-        <th scope="col" class="text-left p-2">[[#{post.usuario.label}]]</th>
-        <th><!-- --></th>
-      </tr>
-      </thead>
-      <tbody class="border-t-2 border-black">
-      <tr th:each="post : ${posts}" class="odd:bg-gray-100">
-        <td class="p-2">[[${post.id}]]</td>
-        <td class="p-2">[[${post.imagen}]]</td>
-        <td class="p-2">[[${post.descripcion}]]</td>
-        <td class="p-2">[[${post.usuario}]]</td>
-        <td class="p-2">
-          <div class="float-right whitespace-nowrap">
-            <a th:href="@{/posts/edit/{id}(id=${post.id})}" class="inline-block text-white bg-gray-500 hover:bg-gray-600 focus:ring-gray-200 focus:ring-3 rounded px-2.5 py-1.5 text-sm">[[#{post.list.edit}]]</a>
-            <form th:action="@{/posts/delete/{id}(id=${post.id})}"
-                  th:hx-confirm="#{delete.confirm}" method="post" class="inline">
-              <button type="submit" class="inline-block text-white bg-gray-500 hover:bg-gray-600 focus:ring-gray-200 focus:ring-3 rounded px-2.5 py-1.5 text-sm">[[#{post.list.delete}]]</button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
+<h1>Detalles del Post</h1>
+
+<div>
+  <h2>Descripción</h2>
+  <p th:text="${post.descripcion}">Descripción del post</p>
 </div>
+
+<div>
+  <h2>Imagen</h2>
+  <img th:src="@{${post.imagen}}" alt="Imagen del Post" style="max-width: 600px;">
+</div>
+
+<div>
+  <h2>Comentarios</h2>
+  <ul>
+    <li th:each="comentario : ${post.comentarios}" th:text="${comentario.contenido}"></li>
+  </ul>
+</div>
+
+<div>
+  <h2>Valoración</h2>
+  <div class="stars">
+    <!-- Generar las estrellas basadas en el rating -->
+    <span th:each="star : ${#numbers.sequence(1, 5)}"
+          th:classappend="${star <= post.rating ? 'filled' : 'empty'}" class="star">★</span>
+  </div>
+  <p th:text="'Promedio: ' + ${post.rating} + ' de 5'"></p>
+</div>
+
+<a href="/posts">Volver a la lista</a>
 </body>
 </html>
