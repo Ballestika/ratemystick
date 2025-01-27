@@ -6,7 +6,6 @@ import com.ratemystick.ratemystick.repos.UsuarioRepository;
 import com.ratemystick.ratemystick.service.PostService;
 import com.ratemystick.ratemystick.util.WebUtils;
 import jakarta.validation.Valid;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,8 +22,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.nio.file.StandardCopyOption;
-
-
 
 @Controller
 @RequestMapping("/posts")
@@ -107,15 +104,14 @@ public class PostController {
         }
     }
 
-
-
-
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable(name = "id") final Long id, final Model model) {
         model.addAttribute("post", postService.get(id));
         return "post/edit";
     }
 
+
+    /*
     @PostMapping("/edit/{id}")
     public String editPost(
             @PathVariable(name = "id") final Long id,
@@ -147,7 +143,7 @@ public class PostController {
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("post.update.success"));
         return "redirect:/posts";
     }
-
+*/
     private String guardarImagenEnServidor(MultipartFile imagen) {
         if (imagen.isEmpty()) {
             throw new RuntimeException("El archivo está vacío");

@@ -1,5 +1,6 @@
 package com.ratemystick.ratemystick;
 
+import com.ratemystick.ratemystick.config.SecurityConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
