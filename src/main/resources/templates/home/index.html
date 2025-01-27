@@ -1,61 +1,114 @@
-<!DOCTYPE HTML>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout}">
+
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>[[#{home.index.headline}]]</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valorar Post</title>
+    <style>
+        .stars {
+            display: flex;
+            gap: 5px;
+            font-size: 2rem;
+            color: #ccc;
+        }
+
+        .stars .star.filled {
+            color: #FFD700; /* Color dorado para las estrellas llenas */
+        }
+
+        .stars .star.empty {
+            color: #ccc; /* Color gris para las estrellas vacías */
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-<div layout:fragment="content" class="bg-gray-100 py-10 px-6">
-    <h1 class="text-4xl font-bold text-center mb-10">[[#{home.index.headline}]]</h1>
+<h1>Valorar Post</h1>
 
-    <!-- Contenedor de publicaciones -->
-    <div class="max-w-4xl mx-auto space-y-6">
-        <!-- Iterar sobre los posts -->
-        <div th:each="post : ${posts}" class="bg-white shadow-md rounded-lg p-6">
-            <!-- Usuario/Autor del post -->
-            <div class="flex items-center mb-4">
-                <img th:src="@{'/uploads/' + ${post.usuario} + '.jpg'}" alt="Avatar del usuario"
-                     class="w-12 h-12 rounded-full mr-4">
-                <div>
-                    <p class="text-lg font-semibold" th:text="${post.nombreUsuario}">Nombre del usuario</p>
-                    <p class="text-sm text-gray-500" th:text="'Post ID: ' + ${post.id}">ID del post</p>
-                </div>
-            </div>
-
-            <!-- Contenido del post -->
-            <div>
-                <p class="text-gray-800 mb-4" th:text="${post.descripcion}">Descripción del post</p>
-                <img th:if="${post.imagen != null}" th:src="@{${post.imagen}}" alt="Imagen del post"
-                     class="w-full rounded-lg mb-4">
-            </div>
-
-            <!-- Interacciones -->
-            <div class="flex items-center justify-between text-gray-500">
-                <!-- Likes -->
-                <button class="flex items-center text-blue-500 hover:text-blue-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M14 9l-5 5m0 0l5 5m-5-5H3"/>
-                    </svg>
-                    <span th:text="${post.likes}">0</span> Likes
-                </button>
-
-                <!-- Comentarios -->
-                <p class="text-sm" th:text="${post.comentarios.size()} + ' Comentarios'">0 Comentarios</p>
-            </div>
-
-            <!-- Comentarios -->
-            <div class="mt-6">
-                <h4 class="text-lg font-medium mb-4">Comentarios:</h4>
-                <div th:each="comment : ${post.comentarios}" class="border-t border-gray-300 pt-4">
-                    <p class="text-sm text-gray-800" th:text="${comment}">Texto del comentario</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Mostrar información del post -->
+<div>
+    <h2 th:text="${post.descripcion}">Descripción del Post</h2>
+    <img th:src="@{${post.imagen}}" alt="Imagen del Post" style="max-width: 100%; height: auto;"/>
 </div>
+
+<!-- Formulario para valorar -->
+<form th:action="@{/posts/valorar}" method="post" id="ratingForm">
+    <input type="hidden" th:value="${post.id}" name="postId"/>
+    <input type="hidden" name="rating" id="ratingValue" value="0"/>
+
+    <div class="stars">
+        <span class="star" data-value="1">☆</span>
+        <span class="star" data-value="2">☆</span>
+        <span class="star" data-value="3">☆</span>
+        <span class="star" data-value="4">☆</span>
+        <span class="star" data-value="5">☆</span>
+    </div>
+
+    <button type="submit">Enviar Valoración</button>
+</form>
+
+<!-- Formulario para añadir comentario -->
+<form th:action="@{/posts/comentario}" method="post">
+    <textarea name="contenido" placeholder="Escribe tu comentario..." required></textarea>
+    <input type="hidden" name="postId" th:value="${post.id}"/>
+    <input type="hidden" name="usuarioId" th:value="${usuarioId}"/> <!-- usuarioId debe ser proporcionado desde el backend -->
+    <button type="submit">Añadir Comentario</button>
+</form>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const stars = document.querySelectorAll(".star");
+        const ratingValue = document.getElementById("ratingValue");
+
+        stars.forEach(star => {
+            star.addEventListener("mouseover", () => {
+                resetStars();
+                fillStarsUpTo(star);
+            });
+
+            star.addEventListener("click", () => {
+                const rating = star.getAttribute("data-value");
+                ratingValue.value = rating;
+                resetStars();
+                fillStarsUpTo(star);
+                console.log(`Seleccionaste ${rating} estrellas`);
+            });
+
+            star.addEventListener("mouseout", () => {
+                resetStars();
+                fillStarsUpTo(stars[ratingValue.value - 1]);
+            });
+        });
+
+        function resetStars() {
+            stars.forEach(star => star.classList.remove("filled"));
+        }
+
+        function fillStarsUpTo(star) {
+            if (star) {
+                for (let i = 0; i <= star.getAttribute("data-value") - 1; i++) {
+                    stars[i].classList.add("filled");
+                }
+            }
+        }
+    });
+</script>
 </body>
 </html>

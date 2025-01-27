@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>[[#{home.index.headline}]]</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <style>
+    .stars {
+      display: flex;
+      gap: 5px;
+      font-size: 2rem;
+    }
+
+    .stars .star.filled {
+      color: #FFD700; /* Color dorado para las estrellas llenas */
+    }
+
+    .stars .star.empty {
+      color: #ccc; /* Color gris para estrellas vacías */
+    }
+  </style>
+</head>
+<body>
+<div layout:fragment="content" class="bg-gray-100 py-10 px-6">
+  <h1 class="text-4xl font-bold text-center mb-10">[[#{home.index.headline}]]</h1>
+
+  <!-- Contenedor de publicaciones -->
+  <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Iterar sobre los posts -->
+    <div th:each="post : ${posts}" class="bg-white shadow-md rounded-lg p-6">
+      <!-- Usuario/Autor del post -->
+      <div class="flex items-center mb-4">
+        <img th:src="@{'/uploads/' + ${post.usuario} + '.jpg'}" alt="Avatar del usuario"
+             class="w-12 h-12 rounded-full mr-4">
+        <div>
+          <p class="text-lg font-semibold" th:text="${post.nombreUsuario}">Nombre del usuario</p>
+          <p class="text-sm text-gray-500" th:text="'Post ID: ' + ${post.id}">ID del post</p>
+        </div>
+      </div>
+
+      <!-- Contenido del post -->
+      <div>
+        <p class="text-gray-800 mb-4" th:text="${post.descripcion}">Descripción del post</p>
+        <img th:if="${post.imagen != null}" th:src="@{${post.imagen}}" alt="Imagen del post"
+             class="w-full rounded-lg mb-4">
+      </div>
+
+      <!-- Valoración -->
+      <div>
+        <h2>Valoración</h2>
+        <div class="stars">
+          <!-- Generar las estrellas basadas en el rating -->
+          <span th:each="star : ${#numbers.sequence(1, 5)}"
+                th:classappend="${star <= post.rating ? 'filled' : 'empty'}" class="star">★</span>
+        </div>
+        <p th:text="'Promedio: ' + ${post.rating} + ' de 5'"></p>
+      </div>
+
+      <!-- Comentarios -->
+      <div class="mt-6">
+        <h4 class="text-lg font-medium mb-4">Comentarios:</h4>
+        <div th:each="comment : ${post.comentarios}" class="border-t border-gray-300 pt-4">
+          <p class="text-sm text-gray-800" th:text="${comment.contenido}">Texto del comentario</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -8,11 +8,8 @@ import com.ratemystick.ratemystick.repos.UsuarioRepository;
 import com.ratemystick.ratemystick.service.ComentarioService;
 import com.ratemystick.ratemystick.service.PostService;
 import com.ratemystick.ratemystick.service.RatingService;
-import com.ratemystick.ratemystick.util.WebUtils;
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -154,47 +151,32 @@ public class PostController {
 
 
 
-
-    @GetMapping("/valorar")
-    public String valorarPost(Model model, RedirectAttributes redirectAttributes) {
+    @GetMapping("/listar")
+    public String index(Model model) {
         try {
-            // Obtener un post aleatorio
-            PostDTO postAleatorio = postService.getRandomPost();
-            model.addAttribute("post", postAleatorio); // Pasar el post al modelo
-            model.addAttribute("rating", new RatingDTO()); // Añadir un objeto RatingDTO vacío
-            return "post/valorar"; // Vista específica para valorar
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "No hay posts disponibles para valorar.");
-            return "redirect:/posts"; // Redirigir a la lista si ocurre un error
-        }
-    }
+            // Llama a findAll() para obtener todos los posts
+            List<PostDTO> posts = postService.findAll();
 
+            // Para cada post, calcula el rating promedio y asigna comentarios
+            for (PostDTO post : posts) {
+                double puntos = postService.getTotalPuntos(post.getId());
+                long cantidadVotos = postService.getCantidadVotos(post.getId());
+                double promedio = cantidadVotos > 0 ? (double) puntos / cantidadVotos : 0;
+                post.setRating(Math.round(promedio * 10) / 10.0);
 
-    @PostMapping("/valorar")
-    public String registrarValoracion(@RequestParam("postId") Long postId,
-                                      @RequestParam("rating") int rating,
-                                      final RedirectAttributes redirectAttributes) {
-        try {
-            // Asegurarse de que se haya seleccionado una valoración
-            if (rating < 1 || rating > 5) {
-                redirectAttributes.addFlashAttribute("error", "La valoración debe estar entre 1 y 5 estrellas.");
-                return "redirect:/posts/valorar"; // Volver a la pantalla de valoración
+                // Obtiene los comentarios del post
+                List<ComentarioDTO> comentarios = comentarioService.findByPostId(post.getId());
+                post.setComentarios(comentarios);
             }
 
-            // Crear RatingDTO
-            RatingDTO ratingDTO = new RatingDTO();
-            ratingDTO.setPuntuacion(String.valueOf(rating));
-            ratingDTO.setPost(postId);
-
-            // Guardar la valoración
-            ratingService.create(ratingDTO);
-
-            redirectAttributes.addFlashAttribute("success", "¡Valoración registrada exitosamente!");
+            model.addAttribute("posts", posts);
+            return "post/listar"; // Devuelve la vista principal con la lista de posts
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Ocurrió un error al registrar tu valoración.");
+            model.addAttribute("error", "No se pudo cargar la lista de posts.");
+            return "post/listar"; // Puedes redirigir o mostrar un mensaje de error en
         }
-        return "redirect:/posts/valorar"; // Redirigir para valorar otro post
     }
+
 
     @PostMapping("/comentario")
     public String registrarComentario(@RequestParam("contenido") String contenido,
